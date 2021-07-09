@@ -1,0 +1,2 @@
+[04-Jul-2021 16:12:40 UTC] PHP Fatal error:  require_once(): Failed opening required 'E:\xampp\htdocs\mdm-crt2\system\vendor/autoload.php' (include_path='.;E:\xampp\php\includes') in E:\xampp\htdocs\mdm-crt2\application\libraries\WebPush.php on line 3
+[08-Jul-2021 01:22:36 UTC] PHP Fatal error:  Cannot use isset() on the result of an expression (you can use "null !== expression" instead) in E:\xampp\htdocs\mdm-crt2\application\controllers\Manage.php on line 46
