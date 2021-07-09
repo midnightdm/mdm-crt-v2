@@ -15,6 +15,9 @@ user_guide_src/cilexer/dist/*
 user_guide_src/cilexer/pycilexer.egg-info/*
 /vendor/
 
+application/config/mdm-crt2-firebase-adminsdk-i2ja2-abb8348943.json
+application/config/mdm-qcrt-demo-1-firebase-adminsdk-5v5wl-34fc140023.json
+
 # IDE Files
 #-------------------------
 /nbproject/
