@@ -1,12 +1,16 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-require_once FCPATH.'vendor/autoload.php';
+
+require_once BASEPATH.'../vendor/autoload.php';
 
 use Minishlink\WebPush\Subscription;
 
 
 class Manage extends CI_Controller {
+	function __construct() {
+    	parent::__construct();
+	}
 
 	/**
 	 * Index Page for this controller.
@@ -31,6 +35,8 @@ class Manage extends CI_Controller {
 		//$db = $firebase->getDatabase();
 		$data = array();
 		$data['path'] = "";
+		$data['css'] = "css/manage.css";
+		$data['title'] = "Manage";
 		$data['status'] = "Disabled";
 		$data['publicKey'] = getenv('MDM_VKEY_PUB');
 		$data['privateKey'] = getenv('MDM_VKEY_PRI');
@@ -39,20 +45,40 @@ class Manage extends CI_Controller {
 	}
 
 	public function push() {
-		$subscriber = false;
-		//$this->load->library('firestore', 'user_devices');
-		//$doc = $this->firestore->getDocument();
+		$subscriber = false;		
 
-		if($this->input->post('endpoint') !== null) {
+		if($this->input->post('user_index') !== null) {
+			//Post data is a firestore db document index
+			$idx = trim($this->input->post('user_index'));
+
+			//Initiate firestore object on the "user_devices" collection
+			$this->load->library('firestore', ["name" => "user_devices"]);	
+		
+			//Plug in the index to retrieve user's stored push data					
+			$device = $this->firestore->getDocument($idx);
+			if(!$device) {
+				echo '{"success": false, "message": "Bad user index"}';
+				return;
+			}
 			$subscriber = array();
-			$subscriber['endpoint']  = trim($this->input->post('endpoint'));
-			$subscriber['auth']      = trim($this->input->post('auth'));
-			$subscriber['p256dh']    = trim($this->input->post('p256dh'));
+			$subscriber['endpoint']  = $device['subscription']['endpoint'];
+			$subscriber['auth']      = $device['subscription']['auth'];
+			$subscriber['p256dh']    = $device['subscription']['p256dh'];
 		} else {
-			echo "Subcriber data not posted.";
+			echo '{"success": false, "message": "Bad or no post data"}';
 			return;
 		}
 		
+		//Prepare VAPID package and initialize WebPush
+		$auth = array(
+			'VAPID' => array(
+				'subject' => 'https://www.clintonrivertraffic.com/about',
+				'publicKey' => getenv('MDM_VKEY_PUB'),
+				'privateKey' => getenv('MDM_VKEY_PRI') 
+			)
+		);		
+		$this->load->library('webPushLibrary', $auth);	
+
 		//Prepare subscription package  
 		$data = [
 			"contentEncoding" => "aesgcm",
@@ -64,25 +90,11 @@ class Manage extends CI_Controller {
 		];
 		$subscription = createSubscription($data);
 		
-		
-		//Prepare VAPID package
-		$auth = array(
-			'VAPID' => array(
-				'subject' => 'https://www.clintonrivertraffic.com/about',
-				'publicKey' => getenv('MDM_VKEY_PUB'),
-				'privateKey' => getenv('MDM_VKEY_PRI') 
-			)
-		);
-		
-
-		$this->load->library('webPushLibrary', $auth);
-		
 		//Prepare notification message
 		$msg = [
 			"title" => "CRT Test Message",
 			"body"  => "Thank you for subscribing. Be sure to pick which events you want to receive.",
 			"icon"  => "images/favicon.png",
-			"badge" => "images/badge.png",
 			"url"   => "https://www.clintonrivertraffic.com/livescan/live"
 		];
 
